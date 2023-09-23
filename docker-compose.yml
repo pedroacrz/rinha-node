@@ -1,0 +1,60 @@
+version: '3'
+services:
+    db:
+      image: db
+      environment:
+        POSTGRES_PASSWORD: docker
+      network_mode: host
+      restart: always 
+      command: "postgres -c log_statement=none -c max_connections=205 -c shared_buffers=512MB -c effective_cache_size=1536MB -c maintenance_work_mem=128MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=1310kB -c huge_pages=off -c min_wal_size=1GB -c max_wal_size=4GB"
+      deploy:
+        resources:
+          limits:
+            cpus: '0.7'
+            memory: '1.3GB'
+    app:
+      image: api_rinha
+      build: .
+      network_mode: host
+      environment: 
+        PORT: 13000
+      volumes:
+        - .:/usr/src/app
+      depends_on:
+        - db
+      deploy:
+        resources:
+          limits:
+            cpus: '0.3'
+            memory: '0.7GB'
+    app2:
+      image: api_rinha
+      environment:
+        PORT: 13001
+      network_mode: host
+      volumes:
+        - .:/usr/src/app
+      depends_on:
+        - db
+      restart: always
+      deploy:
+        resources:
+          limits:
+            cpus: '0.3'
+            memory: '0.5GB'
+    nginx:
+      image: nginx:latest
+      volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf
+      network_mode: host
+      depends_on:
+        - app
+        - app2
+      deploy:
+        resources:
+          limits:
+            cpus: '0.2'
+            memory: '0.5GB'
+  
+  
+  
